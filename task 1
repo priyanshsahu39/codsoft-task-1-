@@ -1,124 +1,78 @@
-from tkinter import *
-from tkinter import messagebox
-import sqlite3 as sql
+*Frontend (Client-side):*
 
-def add_task():  
-    task_string = task_field.get()  
-    if len(task_string) == 0:  
-        messagebox.showinfo('Error', 'Field is Empty.')  
-    else:    
-        tasks.append(task_string)   
-        the_cursor.execute('insert into tasks values (?)', (task_string ,))    
-        list_update()    
-        task_field.delete(0, 'end')  
-    
-def list_update():    
-    clear_list()    
-    for task in tasks:    
-        task_listbox.insert('end', task)  
-  
-def delete_task():  
-    try:  
-        the_value = task_listbox.get(task_listbox.curselection())    
-        if the_value in tasks:  
-            tasks.remove(the_value)    
-            list_update()   
-            the_cursor.execute('delete from tasks where title = ?', (the_value,))  
-    except:   
-        messagebox.showinfo('Error', 'No Task Selected. Cannot Delete.')        
-  
-def delete_all_tasks():  
-    message_box = messagebox.askyesno('Delete All', 'Are you sure?')  
-    if message_box == True:    
-        while(len(tasks) != 0):    
-            tasks.pop()    
-        the_cursor.execute('delete from tasks')   
-        list_update()  
-   
-def clear_list():   
-    task_listbox.delete(0, 'end')  
-  
-def close():    
-    print(tasks)   
-    guiWindow.destroy()  
-    
-def retrieve_database():    
-    while(len(tasks) != 0):    
-        tasks.pop()    
-    for row in the_cursor.execute('select title from tasks'):    
-        tasks.append(row[0])  
-   
-if __name__ == "__main__":   
-    guiWindow = Tk()   
-    guiWindow.title("To-Do List ")  
-    guiWindow.geometry("665x400+550+250")   
-    guiWindow.resizable(0, 0)  
-    guiWindow.configure(bg = "#B5E5CF")  
-   
-    the_connection = sql.connect('listOfTasks.db')   
-    the_cursor = the_connection.cursor()   
-    the_cursor.execute('create table if not exists tasks (title text)')  
-    
-    tasks = []  
-        
-    functions_frame = Frame(guiWindow, bg = "#8EE5EE") 
-    
-    functions_frame.pack(side = "top", expand = True, fill = "both")  
- 
-    task_label = Label( functions_frame,text = "TO-DO-LIST \n Enter the Task Title:",  
-        font = ("arial", "14", "bold"),  
-        background = "#8EE5EE", 
-        foreground="#FF6103"
-    )    
-    task_label.place(x = 20, y = 30)  
-        
-    task_field = Entry(  
-        functions_frame,  
-        font = ("Arial", "14"),  
-        width = 42,  
-        foreground="black",
-        background = "white",  
-    )    
-    task_field.place(x = 180, y = 30)  
-    
-    add_button =Button(  
-        functions_frame,  
-        text = "Add",  
-        width = 15,
-        bg='#D4AC0D',font=("arial", "14", "bold"),
-        command = add_task,
-        
-    )  
-    del_button = Button(  
-        functions_frame,  
-        text = "Remove",  
-        width = 15,
-        bg='#D4AC0D', font=("arial", "14", "bold"),
-        command = delete_task,  
-    )  
-    del_all_button = Button(  
-        functions_frame,  
-        text = "Delete All",  
-        width = 15,
-        font=("arial", "14", "bold"),
-        bg='#D4AC0D',
-        command = delete_all_tasks  
-    )
-    
-    exit_button = Button(  
-        functions_frame,  
-        text = "Exit / Close",  
-        width = 52,
-        bg='#D4AC0D',  font=("arial", "14", "bold"),
-        command = close  
-    )    
-    add_button.place(x = 18, y = 80,)  
-    del_button.place(x = 240, y = 80)  
-    del_all_button.place(x = 460, y = 80)  
-    exit_button.place(x = 17, y = 330)  
-    
-    task_listbox = Listbox(  
-        functions_frame,  
-        width = 70,  
-        height = 9,  
-      �=A
+HTML:
+```
+<form id="registration-form">
+  <label>Username:</label>
+  <input type="text" id="username" name="username"><br><br>
+  <label>Email:</label>
+  <input type="email" id="email" name="email"><br><br>
+  <label>Password:</label>
+  <input type="password" id="password" name="password"><br><br>
+  <label>Confirm Password:</label>
+  <input type="password" id="confirm-password" name="confirm-password"><br><br>
+  <button id="submit-btn">Register</button>
+</form>
+```
+JavaScript (using AJAX):
+```
+const form = document.getElementById('registration-form');
+const submitBtn = document.getElementById('submit-btn');
+
+submitBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  const username = document.getElementById('username').value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const confirmPassword = document.getElementById('confirm-password').value;
+
+  if (password === confirmPassword) {
+    const userData = { username, email, password };
+    fetch('/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData),
+    })
+    .then((response) => response.json())
+    .then((data) => console.log(data))
+    .catch((error) => console.error(error));
+  } else {
+    alert('Passwords do not match!');
+  }
+});
+```
+*Backend (Server-side):*
+
+Node.js (using Express.js):
+```
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+
+app.use(bodyParser.json());
+
+mongoose.connect('mongodb://localhost/mydatabase', { useNewUrlParser: true, useUnifiedTopology: true });
+
+const User = mongoose.model('User', {
+  username: String,
+  email: String,
+  password: String,
+});
+
+app.post('/register', (req, res) => {
+  const { username, email, password } = req.body;
+  const user = new User({ username, email, password });
+  user.save((err, data) => {
+    if (err) {
+      res.status(400).send(err);
+    } else {
+      res.send({ message: 'User registered successfully!' });
+    }
+  });
+});
+
+app.listen(3000, () => {
+  console.log('Server listening on port 3000');
+});
+```
